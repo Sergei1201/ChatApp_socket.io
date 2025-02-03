@@ -32,17 +32,18 @@ app.use(express.static(path.join(__dirname, 'public')))
 io.on('connection', (socket) => {
 
     // Listen for join room event from the client
-    socket.on('joinRoom', (username, room) => {
+    socket.on('joinRoom', ({ username, room }) => {
         const user = joinRoom(socket.id, username, room)
 
         // Join the user to a specific room (socket)
         socket.join(user.room)
 
+
         // Emit a message to the client after it's connected
-        socket.to(user.room).emit('message', `Welcome to the chat`)
+        socket.emit('message', `Welcome to the chat`)
 
         // Emit to every client except for the connected client
-        socket.broadcast.to(user.room).emit('message', `A user has joined the chat`)
+        socket.broadcast.to(user.room).emit('message', `${user.username} has joined the chat`)
 
         // Listen for a message from the client and send it back to the client
         socket.on('chatMessage', (message) => {
@@ -53,7 +54,7 @@ io.on('connection', (socket) => {
 
 
         socket.on('disconnect', () => {
-            io.to(user.room).emit('message', `A user has left the chat`)
+            io.to(user.room).emit('message', `${user.username} has left the chat`)
         })
     })
 
