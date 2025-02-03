@@ -1,0 +1,20 @@
+{
+  "name": "chatapp",
+  "version": "1.0.0",
+  "description": "chat app with node & socket.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "author": "Sergei Sokolov",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "moment": "^2.30.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
