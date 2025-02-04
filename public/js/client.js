@@ -1,36 +1,40 @@
+/* Client-side script */
+
+// Connecting to the server from the client
 const socket = io()
 
-// Get input fields from the form
+// Get query string params of username and room using 'name' properties
+const {username, room} = Qs.parse(location.search, {
+    ignoreQueryPrefix: true
+})
+
+// Send the join room event to the server using query string params 
+socket.emit('joinRoom', {username, room})
+
+// Get form variables
 const messages = document.getElementById('messages')
 const form = document.getElementById('form')
 const input = document.getElementById('input')
 
-// Send a message from the client to the server when the form has been submitted
+
+// Send message to the server
 form.addEventListener('submit', (e) => {
     e.preventDefault()
-    // Send message if the input is not empty
     if (input.value) {
         socket.emit('chatMessage', input.value)
-        // Clear the fields after the message is sent
         input.value = ''
     }
 })
 
-// Use a query string package to parse a string from the URL
-const { username, room } = Qs.parse(location.search, {
-    ignoreQueryPrefix: true
-})
-
-// Send the join room event to the server
-socket.emit('joinRoom', { username, room })
-
-// Listen for a message from the server and output it into the DOM
-socket.on('message', (output) => {
-    // Construct a new element
+// Catch message from the server and output it into the DOM
+socket.on('message', (message) => {
+    // Create element
     const li = document.createElement('li')
-    // Add a new class to the element
-    li.className = "group-list-item"
-    li.innerHTML = output
+    // Add class
+    li.className = 'list-group-item'
+    li.textContent = `${message.time} from ${message.username} : ${message.text}`
     // Append to the DOM
     messages.appendChild(li)
+    // Scroll messages after appending one into the DOM
+    window.scrollTo(0, document.body.scrollHeight)
 })
