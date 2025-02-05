@@ -1,12 +1,13 @@
-/* Dealing with rooms and users */
+/* Utils functions */
 
 let users = []
 
-// Join room
+// Join user to room
 const joinRoom = (id, username, room) => {
     const user = {id, username, room}
-    // Add user to a room
+    // Push user to users that are already in the room
     users.push(user)
+    // Return the user
     return user
 }
 

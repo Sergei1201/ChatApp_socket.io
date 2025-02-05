@@ -1,10 +1,10 @@
 /* Format messages */
 const moment = require('moment')
 
-const formatMessage = (username, text) => {
+const formatMessage = (username, message) => {
     return {
         username,
-        text,
+        message,
         time: moment().format('h:mm:ss a')
     }
 }

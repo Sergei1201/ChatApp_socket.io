@@ -1,40 +1,48 @@
 /* Client-side script */
 
-// Connecting to the server from the client
+// Connect the client side to the socket.io
 const socket = io()
 
-// Get query string params of username and room using 'name' properties
-const {username, room} = Qs.parse(location.search, {
-    ignoreQueryPrefix: true
-})
-
-// Send the join room event to the server using query string params 
-socket.emit('joinRoom', {username, room})
-
-// Get form variables
+// Get form fields
 const messages = document.getElementById('messages')
 const form = document.getElementById('form')
 const input = document.getElementById('input')
 
+// Parse query string params from URL to get usrename and room
+const {username, room} = Qs.parse(location.search, {
+    // Bypass the leading question mark in the query string
+    ignoreQueryPrefix: true
+        }
+)
 
-// Send message to the server
+// Output message to the DOM
+const output = (data) => {
+    // Create a new element
+    const li = document.createElement('li')
+    // Add class
+    li.className = 'list-group-item'
+    // Put data inside the li
+    li.textContent = `${data.time} from ${data.username} : ${data.message}` 
+    // Append element into the DOM
+    messages.appendChild(li)
+    // Scroll after appending a new element
+    window.scrollTo(0, document.body.scrollHeight)
+}
+
+// Emit public chatMessage event to the server after the form is submitted
 form.addEventListener('submit', (e) => {
     e.preventDefault()
     if (input.value) {
         socket.emit('chatMessage', input.value)
         input.value = ''
+        input.focus()
     }
 })
 
-// Catch message from the server and output it into the DOM
-socket.on('message', (message) => {
-    // Create element
-    const li = document.createElement('li')
-    // Add class
-    li.className = 'list-group-item'
-    li.textContent = `${message.time} from ${message.username} : ${message.text}`
-    // Append to the DOM
-    messages.appendChild(li)
-    // Scroll messages after appending one into the DOM
-    window.scrollTo(0, document.body.scrollHeight)
+// Catch message event from the server
+socket.on('message', (data) => {
+    output(data)
 })
+
+// Emit joinRoom event to the server to join a user to a chatroom
+socket.emit('joinRoom', {username, room})
