@@ -6,7 +6,7 @@ const {Server} = require('socket.io')
 const path = require('node:path')
 require('dotenv').config()
 const {formatMessage} = require('./utils/formatMessage')
-const {userJoin} = require('./utils/users')
+const {userJoin, getUser, getUsers, userLeaves} = require('./utils/users')
 
 // Port variable
 const PORT = process.env.PORT || 5000
@@ -41,6 +41,12 @@ io.on('connection', (socket) => {
         // Join the user to the passed in room from the client
         socket.join(user.room)
         console.log(user)
+
+        // Send room's name and users to the client after a new user has joined the room
+        io.to(user.room).emit('roomUsers', {
+            room: user.room,
+            users: getUsers(user.room)
+        })
 
          // When a client connects, broadcast to the client and the other clients in the room (notify them that a new client has joined the chatroom)
         socket.emit('message', formatMessage(admin, `${user.username}, welcome to the chatroom`))

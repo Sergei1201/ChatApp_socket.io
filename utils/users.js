@@ -12,13 +12,31 @@ const userJoin = (id, username, room) => {
 
 // Get users from the current room
 const getUsers = (room) => {
-    users.map(user => {
-        user.room == room
+    return users.filter(user => {
+        user.room === room
     })
-    return users
 }
+
+// Get current user
+const getUser = (id) => {
+    return users.find(user => {
+        user.id === id
+    })
+}
+
+// User leaves the chat
+const userLeaves = (id) => {
+    const index = users.find(user => user.id === id)
+    if (index !== -1) {
+        return users.splice(index, 1)[0]
+    }
+}
+
+
 
 module.exports = {
     userJoin,
     getUsers,
+    getUser,
+    userLeaves,
 }

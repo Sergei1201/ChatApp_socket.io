@@ -5,6 +5,8 @@ const socket = io()
 const messages = document.getElementById('messages')
 const form = document.getElementById('form')
 const input = document.getElementById('input')
+const roomName = document.querySelector('.room-name')
+const usersList = document.getElementById('chat-users')
 
 /* Define functions */
 
@@ -20,6 +22,21 @@ const output = (message) => {
     messages.appendChild(li)
     // Scroll messages after appending a new one into the DOM
     window.scrollTo(0, document.body.scrollHeight)
+}
+
+// Output room users and room's name into the DOM
+const outputRoomUsers = (users) => {
+    users.forEach(user => {
+        const li = document.createElement('li')
+        li.textContent = user.username
+        usersList.appendChild(li)
+        console.log(user.username)
+    })
+}
+
+// Output room's name
+const outputRoom = (room) => {
+    roomName.textContent = room
 }
 
 // Get user and room from the query string params
@@ -45,4 +62,10 @@ form.addEventListener('submit', (e) => {
 // Catch the message event from the server and output the message into the dom
 socket.on('message', (message) => {
     output(message)
+})
+
+// Catch the roomUsers' event and output users and room into the DOM
+socket.on('roomUsers', ({room, users}) => {
+    outputRoomUsers(users)
+    outputRoom(room)
 })
