@@ -1,16 +1,24 @@
-/* Utils functions */
-
+/* Dealing with users and rooms */
 let users = []
 
-// Join user to room
-const joinRoom = (id, username, room) => {
+// User joins a room
+const userJoin = (id, username, room) => {
     const user = {id, username, room}
-    // Push user to users that are already in the room
+    // Push a user into a room
     users.push(user)
-    // Return the user
+    // Return a new user
     return user
 }
 
+// Get users from the current room
+const getUsers = (room) => {
+    users.map(user => {
+        user.room == room
+    })
+    return users
+}
+
 module.exports = {
-    joinRoom,
+    userJoin,
+    getUsers,
 }

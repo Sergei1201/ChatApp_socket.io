@@ -1,69 +1,64 @@
 /* Server-side script */
 const express = require('express')
-const {Server} = require('socket.io')
-const {createServer} = require('node:http')
-const path = require('path')
 const { create } = require('node:domain')
+const {createServer} = require('node:http')
+const {Server} = require('socket.io')
+const path = require('node:path')
 require('dotenv').config()
 const {formatMessage} = require('./utils/formatMessage')
-const {joinRoom} = require('./utils/users')
+const {userJoin} = require('./utils/users')
 
 // Port variable
 const PORT = process.env.PORT || 5000
+
+// Admin variable
+const admin = 'Admin'
 
 // Initialize express
 const app = express()
 // Create server
 const server = createServer(app)
-// Instantiate socket.io and hook it up to the server
+// Instantiate socket.io object and hook it up to the server
 const io = new Server(server)
-// Admin
-const chatBot = 'Admin'
 
 // Express static folder
 app.use(express.static(path.join(__dirname, 'public')))
 
-
 /* Implement socket.io */
-/* Socket.io event types
-    socket.emit() - emit event to the socket that's connected to the server
-    socket.broadcast.emit() - emit event to every socket except for the socket that's connected
-    io.emit() - emit event to every socket in general
+/* Socket.io broadcast events' types
+    socket.emit() - broadcast to the socket that's connected
+    socket.broadcast.emit() - broadcast to every socket except for the one that's connected
+    io.emit() - broadcast to every socket
 */
 
-// Listen for the connection event from the client
+// Listen for a connection from the client
 io.on('connection', (socket) => {
-
-    // Listen for joinRoom event from the client to join a user to a room
+    
+    // Listen for the joinUser event from the client
     socket.on('joinRoom', ({username, room}) => {
-
-            // Adding user to the room users
-            const user = joinRoom(socket.id, username, room)
-            // Actually join the room
-            socket.join(user.room)
-            console.log(user)
-
-            // Emit message to the client after it's conneted
-        socket.emit('message', formatMessage(chatBot, `${user.username}, welcome to the chatroom`))
+        const user = userJoin(socket.id, username, room)
         
-        // Emit to every client that except for the client that's connecting that it's connecting
-        socket.broadcast.to(user.room).emit('message', formatMessage(chatBot, `${user.username} has joined the chatroom`))
+        // Join the user to the passed in room from the client
+        socket.join(user.room)
+        console.log(user)
 
-        // Listen for chatMessage from the client
+         // When a client connects, broadcast to the client and the other clients in the room (notify them that a new client has joined the chatroom)
+        socket.emit('message', formatMessage(admin, `${user.username}, welcome to the chatroom`))
+        socket.broadcast.to(user.room).emit('message', formatMessage(admin, `${user.username} has joined the chat`))
+
+        // Catch the chatMessage event from the client and send it back to it 
         socket.on('chatMessage', (message) => {
-            // Emit the message back to every socket for outputting it into the DOM
+            // Emit to every socket
             io.to(user.room).emit('message', formatMessage(user.username, message))
         })
 
-        // Client disconneted
-        socket.on('disconnect', () => {
-            // Emit to every socket after the client disconnected
-            io.to(user.room).emit('message', formatMessage(chatBot, `${user.username} has left the chatroom`))
-        })
-        })
-
+        // Client disconnected
+         socket.on('disconnect', () => {
+        io.to(user.room).emit('message', formatMessage(admin, `${user.username} has left the chat`))
+         })
+    })
    
-})
+    })
 
-// Run the server
+// Start the server on port
 server.listen(PORT, () => console.log(`Server is running on port ${PORT}`))

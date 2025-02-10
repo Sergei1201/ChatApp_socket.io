@@ -5,18 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatRoom</title>
-    <style>
-        #form {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 3rem; box-sizing: border-box; display: flex; padding: 5px; color: transparent;
-            }
-
-    </style>
+    <link rel="stylesheet" href="./css//style.css">
 </head>
 
 <body>
-    <div class="container">
+    <div class="users">
+        <p>Users in <span class="lead">Programming</span> Room</p>
+        <ul class="list-group" id="users">
+            <li>Mike</li>
+            <li>Joih</li>
+            <li>Steve</li>
+            <li>Kate</li>
+        </ul>
+    </div>    
+    <div class="my-container">
         <ul class="list-group" id="messages">
-
         </ul>
         <div class="mt-5">
             <form id="form">
