@@ -43,6 +43,12 @@ const outputRoom = (room) => {
 
 // Output room users into the DOM
 const outputRoomUsers = (users) => {
+    
+    // Clear the ul at first (for refreshing the list of users in the room)
+    while (chatUsers.firstChild) {
+        chatUsers.removeChild(chatUsers.firstChild)
+    }
+    // Loop through the array of users and output them into the DOM
     users.forEach(user => {
 
         // Create a new element (li)
