@@ -1,42 +1,42 @@
-/* Dealing with users and rooms */
+/* Users helper functions */
 let users = []
 
-// User joins a room
-const userJoin = (id, username, room) => {
+// User joins room
+const joinRoom = (id, username, room) => {
     const user = {id, username, room}
-    // Push a user into a room
+    
+    // Push a new user to the users array (the users that are already in the chosen room)
     users.push(user)
-    // Return a new user
+    
+    // Return the new user
     return user
 }
 
-// Get users from the current room
-const getUsers = (room) => {
-    return users.filter(user => {
-        user.room === room
-    })
+// Get room users
+const getRoomUsers = (room) => {
+    return users.filter(user => user.room === room)
 }
 
 // Get current user
-const getUser = (id) => {
-    return users.find(user => {
-        user.id === id
-    })
+const getCurrentUser = (id) => {
+    return users.find(user => user.id === id)
 }
 
-// User leaves the chat
 const userLeaves = (id) => {
-    const index = users.find(user => user.id === id)
+    
+    // Find index of the leaving user
+    const index = users.findIndex(user => user.id === id)
+    
+
+    // If there's user, splice it out from the array and return it
     if (index !== -1) {
         return users.splice(index, 1)[0]
     }
 }
 
-
-
 module.exports = {
-    userJoin,
-    getUsers,
-    getUser,
+    joinRoom,
+    getRoomUsers,
+    getCurrentUser,
     userLeaves,
 }
