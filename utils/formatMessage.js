@@ -1,4 +1,4 @@
-/* Format messages function */
+/* Format a message */
 const moment = require('moment')
 
 const formatMessage = (from, message) => {

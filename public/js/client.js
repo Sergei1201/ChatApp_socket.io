@@ -1,104 +1,99 @@
-// Connect client-side library (socket.io)
+/* Client-side script */
 const socket = io()
 
-// Get form fields
+/* Get form fields to the javascript variables */
 const messages = document.getElementById('messages')
 const form = document.getElementById('form')
 const input = document.getElementById('input')
-const roomName = document.querySelector('.room-name')
 const chatUsers = document.getElementById('chat-users')
+const roomName = document.querySelector('.room-name')
 
-// Grab the username and the room from the query string params of the URL to send them to the server
+/* Parse the query string from the URL params to get username and room (by their names in the index.html file) */
 const {username, room} = Qs.parse(location.search, {
 
-    // Ignore the leading question mark in the URL params so that we get only username and room
+    // In order to escape leading question mark in the query string of the URL params ignore the query prefix (? mark)
     ignoreQueryPrefix: true
 })
 
-/* Function definition */
+// Emit joinRoom event to the server
+socket.emit('joinRoom', {username, room})
 
-// Output messages into the DOM that have been caught from the server side
+/* Function definitions */
+
+// Output message into the DOM
 const outputMessage = (msg) => {
     
-    // Create a new element (li)
+    // Construct a DOM element
     const li = document.createElement('li')
     
     // Add class
-    li.className = 'list-group-item'
+    li.className = 'list-group-items'
 
-    // Add messge to the li
+    // Put a message to the li
     li.textContent = `${msg.time} from ${msg.from}: ${msg.message}`
-    
-    // Output the message into the DOM
+
+    // Append the element into the DOM
     messages.appendChild(li)
 
-    // Scroll the messages after outputting one into the DOM
+    // Scroll messages after outputting into the DOM
     window.scrollTo(0, document.body.scrollHeight)
 }
 
-// Output room name into the DOM
-const outputRoom = (room) => {
-    roomName.textContent = room
-}
+// Output room users
+const outputUsers = (users) => {
 
-// Output room users into the DOM
-const outputRoomUsers = (users) => {
-    
-    // Clear the ul at first (for refreshing the list of users in the room)
+    // Clear the list of the users before outputting them (upgrade users in the DOM)
     while (chatUsers.firstChild) {
         chatUsers.removeChild(chatUsers.firstChild)
     }
+
     // Loop through the array of users and output them into the DOM
     users.forEach(user => {
 
-        // Create a new element (li)
+        // Create a new DOM element
         const li = document.createElement('li')
-
+        
         // Add a class
         li.className = 'list-group-item'
 
         // Add textcontent
         li.textContent = user.username
 
-        // Append to the DOM
+        // Append into the DOM
         chatUsers.appendChild(li)
 
-        // Scroll users after appending one into the DOM
-        window.scrollTo(0, document.body.scrollHeight)
     })
 }
 
-// Emit a message to the server after submitting the form
-form.addEventListener('submit', (e) => {
-    e.preventDefault()
-    
-    // Emit to the server if there's a message typed in
-    if (input.value) {
-        socket.emit('chatMessage', input.value)
+// Output room
+const outputRoom = (room) => {
+    roomName.innerHTML = room
+}
 
-        // Clear input after sending message
-        input.value = ''
-
-        // Focus on the input
-        input.focus()
-    }
+/* Listen for a message from the server */
+socket.on('message', (message) => {
+    outputMessage(message)
 })
 
-// Emit the joinRoom event to the server after getting username and room fields from the query string params of the URL
-socket.emit('joinRoom', {username, room})
+// Listen for roomUsers event from the server and output info into the DOM
+socket.on('roomUsers', ({users, room}) => {
 
-// Listen for roomUsers event from the server and output rooms and users information into the DOM
-socket.on('roomUsers', ({room, users}) => {
+    // Output users - array of objects
+    outputUsers(users)
 
     // Output room
     outputRoom(room)
-
-    // Output an array of user objects
-    outputRoomUsers(users)
-    console.log(users)
 })
 
-// Catch the message evernt from the server and output a message into the DOM
-socket.on('message', (message) => {
-    outputMessage(message)
+/* Submit form */
+form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    // Emit message to the server if there's one
+    if (input.value) {
+        socket.emit('chatMessage', input.value)
+        // Clear fields
+        input.value = ''
+        // Focues
+        input.focus()
+    }
 })

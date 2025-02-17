@@ -1,91 +1,95 @@
 /* Server-side script */
 const express = require('express')
-const { create } = require('node:domain')
+const { createPrivateKey } = require('node:crypto')
 const {createServer} = require('node:http')
-const path = require('path')
-const {Server} = require('socket.io')
 require('dotenv').config()
-const {joinRoom, getRoomUsers, getCurrentUser, userLeaves} = require('./utils/users')
+const path = require('node:path')
+const {Server} = require('socket.io')
+const {userJoins, getCurrentUser, getRoomUsers, userLeaves} = require('./utils/users')
 const {formatMessage} = require('./utils/formatMessage')
 
-// Admin constant
-const admin = 'Admin'
-
-// PORT constant
+// Port variable
 const PORT = process.env.PORT || 5000
+
+// Admin variable
+const admin = 'Admin'
 
 // Initialize express
 const app = express()
-// Create http server
+// Create server
 const server = createServer(app)
-// Instantiate socket.io new object and hook it up to the server
+// Instantiate socket.io object and hook it up to our server
 const io = new Server(server)
 
-// Express static folder
+// Create express static folder
 app.use(express.static(path.join(__dirname, 'public')))
 
 /* Implement socket.io */
-
-/* Socket.io broadcast event types for out application 
-    socket.emit() - emit an event to the socket that's connected
-    socket.broadcast.emit()- emit an event to every socket except for the socket that's connected
+/* Define socket.io broadcast event's types  
+    socket.emit() - emit event to the socket that's connected
+    socket.broadcast.emit() - emit event to every socket except for the socket that's connected
     io.emit() - emit to every socket in general
-*/ 
-
-// Listen for connection from the client
+  */
+ 
+// Listen for a connection from the client
 io.on('connection', (socket) => {
 
-    /* Listen from the joinRoom event from the client */
+    // Listen for the joinRoom event from the client to join room
     socket.on('joinRoom', ({username, room}) => {
 
-        // Join room function
-        const user = joinRoom(socket.id, username, room)
-
+        // Get user object with user.id, username, room
+        const user = userJoins(socket.id, username, room)
+        
         // Actually join the room
         socket.join(user.room)
 
         console.log(user)
-
-        // Send the current room's name and room's users when the client connects 
+    
+        // When a user joins the chatroom, emit to every socket info with room users and the room itself
         io.to(user.room).emit('roomUsers', {
-            room: user.room,
-            users: getRoomUsers(user.room)
+            users: getRoomUsers(user.room),
+            room: user.room
         })
 
-         /* Emit when a socket is connected */
-    
-        // Emit to the socket that's connected
-        socket.emit('message', formatMessage(admin, `${user.username}, welcome to the chatroom`))
-    
-        // Emit to all sockets except for the socket that's connected
-        socket.broadcast.to(user.room).emit('message', formatMessage(admin, `${user.username} has joined the chatroom`))
+        // When a client connected, emit the message to that client
+        socket.emit('message', formatMessage(admin, `${user.username}, welcome to the ${user.room} chatroom`))
 
-        // Catch the chatMessage event from the client and emit it back
+        // Emit message to every client except for the client connected
+        socket.broadcast.to(user.room).emit('message', formatMessage(admin, `${user.username} has joined ${user.room} chatroom`))
+
+        // Listen for the chatMessage event from the client
         socket.on('chatMessage', (message) => {
+
+            // Get the current user that emitted a message to send it to the client
             const user = getCurrentUser(socket.id)
+
+            // Emit it back to every client (because it's a public chatroom)
             io.to(user.room).emit('message', formatMessage(user.username, message))
-             })
-             
-        // Emit when a socket is disconnected
+        })
+
+        // When a client disconnected
         socket.on('disconnect', () => {
-            
+
+            // Get the user that is leaving the chatroom
             const user = userLeaves(socket.id)
+
+            // If there's a user, emit upgraded info about users to the client to be displayed in the DOM
             if (user) {
-                    
-                    // Emit to every socket when a client is disconnected
-                     io.to(user.room).emit('message', formatMessage(admin, `${user.username} has left the chatroom`))
 
-                     // Emit to the client the list of users in the room for refreshing it on the client
-                     io.to(user.room).emit('roomUsers', {
-                        room: user.room,
-                        users: getRoomUsers(user.room)
-                     })
-            }       
+            // Broadcast to every socket, when a client disconnected
+            io.to(user.room).emit('message', formatMessage(`${user.username} has left ${user.room} chatroom`))
 
-                })
-    }) 
+            // Emit the upgraded array of users to the client
+            io.to(user.room).emit('roomUsers', {
+                users: getRoomUsers(user.room),
+                room: user.room
+            })
 
-})
+            }
+        })
+        })
 
-// Listen on port
-server.listen(PORT, console.log(`Server is running on port ${PORT}`))
+    })
+
+// Listen on port 
+server.listen(PORT, () => console.log(`Server is running on port ${PORT}`))
