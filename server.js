@@ -6,18 +6,45 @@ require('dotenv').config()
 const path = require('node:path')
 const {Server} = require('socket.io')
 const {userJoins, getCurrentUser, getRoomUsers, userLeaves} = require('./utils/users')
-const {formatMessage} = require('./utils/formatMessage')
+const {formatMessage} = require('./utils/formatMessage')    
+//const {connectDB} = require('./db')
+const {MongoClient} = require('mongodb')
 
 // Port variable
 const PORT = process.env.PORT || 5000
+
+// Connect to MongoDB
+const connectDB = async () => {
+
+    // Instantiate the MongoClient class
+    const client = new MongoClient(process.env.MONGO_URI)
+
+    // Try connecting to MongoDB
+    try {
+        await client.connect()
+        console.log('MongoDB connected...')
+        const db = client.db()
+        
+        // Create a new collection in our chatapp database
+        let chat = db.collection('chat')
+        
+    } catch (error) {
+        console.log(error)
+        process.exit(-1)
+    }
+}
+
+connectDB()
 
 // Admin variable
 const admin = 'Admin'
 
 // Initialize express
 const app = express()
+
 // Create server
 const server = createServer(app)
+
 // Instantiate socket.io object and hook it up to our server
 const io = new Server(server)
 
@@ -34,12 +61,14 @@ app.use(express.static(path.join(__dirname, 'public')))
 // Listen for a connection from the client
 io.on('connection', (socket) => {
 
+    // When a client connects for the first time, create a new collection in the chatapp database (MongoDB)
+
     // Listen for the joinRoom event from the client to join room
     socket.on('joinRoom', ({username, room}) => {
 
         // Get user object with user.id, username, room
         const user = userJoins(socket.id, username, room)
-        
+
         // Actually join the room
         socket.join(user.room)
 

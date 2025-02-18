@@ -1,4 +1,9 @@
 /* Processing users and rooms */
+
+const { connectDB } = require("../db")
+
+
+// Create a new chat collection in the chatapp db
 let users = []
 
 // User joins room
