@@ -7,34 +7,15 @@ const path = require('node:path')
 const {Server} = require('socket.io')
 const {userJoins, getCurrentUser, getRoomUsers, userLeaves} = require('./utils/users')
 const {formatMessage} = require('./utils/formatMessage')    
-//const {connectDB} = require('./db')
-const {MongoClient} = require('mongodb')
+const {connectDB} = require('./db')
 
 // Port variable
 const PORT = process.env.PORT || 5000
 
+
+
 // Connect to MongoDB
-const connectDB = async () => {
-
-    // Instantiate the MongoClient class
-    const client = new MongoClient(process.env.MONGO_URI)
-
-    // Try connecting to MongoDB
-    try {
-        await client.connect()
-        console.log('MongoDB connected...')
-        const db = client.db()
-        
-        // Create a new collection in our chatapp database
-        let chat = db.collection('chat')
-        
-    } catch (error) {
-        console.log(error)
-        process.exit(-1)
-    }
-}
-
-connectDB()
+//connectDB() 
 
 // Admin variable
 const admin = 'Admin'
@@ -64,10 +45,10 @@ io.on('connection', (socket) => {
     // When a client connects for the first time, create a new collection in the chatapp database (MongoDB)
 
     // Listen for the joinRoom event from the client to join room
-    socket.on('joinRoom', ({username, room}) => {
+    socket.on('joinRoom', async ({username, room}) => {
 
         // Get user object with user.id, username, room
-        const user = userJoins(socket.id, username, room)
+        const user = await userJoins(username, room)
 
         // Actually join the room
         socket.join(user.room)

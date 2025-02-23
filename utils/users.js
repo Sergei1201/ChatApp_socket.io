@@ -1,27 +1,49 @@
 /* Processing users and rooms */
+const {connectDB} = require('../db')
 
-const { connectDB } = require("../db")
+
+// Get users from the database
+const getUsersFromDB = async () => {
+    const db = await connectDB()
+    const userCollection = db.collection('users') // Creates a chats collection if it does not exist
+    const users = await userCollection.find({}.toArray())
+    return users 
+}
 
 
 // Create a new chat collection in the chatapp db
 let users = []
 
 // User joins room
-const userJoins = (id, username, room) => {
+const userJoins = async (username, room) => {
     
-    // Get the user object
-    const user = {id, username, room}
+    // Connect to Mongo
+    const db = await connectDB()
+    const userCollection = db.collection('users')
+    const newUser = {username, room}
+    
+    // Add a new user to the database
+    await userCollection.insertOne(newUser)
+    console.log(newUser)
     
     // Push a new user to the users' array
-    users.push(user)
+    //users.push(user)
 
     // Return the new user
-    return user
+    return newUser
 }
 
 // Get room users
-const getRoomUsers = (room) => {
-    return users.filter(user => user.room === room)
+const getRoomUsers = async (room) => {
+
+    // Connect to Mongo
+    const db = await connectDB()
+    const userCollection = db.collection('users')
+    const users = await userCollection.find({room: room}).toArray()
+
+    console.log(users)
+    //return users.filter(user => user.room === room)
+    //return users
 }
 
 // Get current user

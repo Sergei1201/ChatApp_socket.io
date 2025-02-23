@@ -78,6 +78,8 @@ socket.on('message', (message) => {
 // Listen for roomUsers event from the server and output info into the DOM
 socket.on('roomUsers', ({users, room}) => {
 
+    console.log(users, room)
+
     // Output users - array of objects
     outputUsers(users)
 
