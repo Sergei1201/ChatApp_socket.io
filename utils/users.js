@@ -1,66 +1,73 @@
-/* Processing users and rooms */
+/* DB stuff */
 const {connectDB} = require('../db')
 
-
-// Get users from the database
-const getUsersFromDB = async () => {
+const handleDBConnection =  async () => {
+    
     const db = await connectDB()
-    const userCollection = db.collection('users') // Creates a chats collection if it does not exist
-    const users = await userCollection.find({}.toArray())
-    return users 
+    const usersCollection = db.collection('users')
+    return usersCollection
 }
 
+// Users collection
+const getUsersFromDB = async () => {
 
-// Create a new chat collection in the chatapp db
-let users = []
+     const usersCollection = await handleDBConnection()
+    // Fetch all users from DB and turn them into an array of objects
+    const users = await usersCollection.find({}).toArray()
+
+    return users
+
+}
 
 // User joins room
-const userJoins = async (username, room) => {
-    
-    // Connect to Mongo
-    const db = await connectDB()
-    const userCollection = db.collection('users')
-    const newUser = {username, room}
-    
-    // Add a new user to the database
-    await userCollection.insertOne(newUser)
-    console.log(newUser)
-    
-    // Push a new user to the users' array
-    //users.push(user)
+const userJoins = async (socketid, username, room) => {
 
-    // Return the new user
+    // When a user joins the room, add him to the database
+    const newUser = {socketid, username, room} 
+
+    const usersCollection = await handleDBConnection()
+    // Add a new user to the database
+    await usersCollection.insertOne(newUser)
+    
     return newUser
+
 }
 
-// Get room users
 const getRoomUsers = async (room) => {
 
-    // Connect to Mongo
-    const db = await connectDB()
-    const userCollection = db.collection('users')
-    const users = await userCollection.find({room: room}).toArray()
-
-    console.log(users)
-    //return users.filter(user => user.room === room)
-    //return users
+    const usersCollection = await handleDBConnection()
+    // Get room users
+    const users = await usersCollection.find({
+        room: room
+    }).toArray()
+    
+    // Return the array of users objects
+    return users
 }
-
 // Get current user
-const getCurrentUser = (id) => {
-    return users.find(user => user.id === id)
+const getCurrentUser = async (id) => {
+
+    const usersCollection = await handleDBConnection()
+    const user = await usersCollection.findOne({
+        socketid: id
+    })
+
+
+    return user
 }
 
 // User leaves the room
-const userLeaves = (id) => {
-    
-    // Find index of that user who is leaving the chatroom
-    const index = users.findIndex(user => user.id === id)
+const userLeaves = async (id) => {
 
-    // If there's user, splice it out from the array of users and return it
-    if (index !== -1) {
-        return users.splice(index, 1)[0]
-    }
+    const usersCollection = await handleDBConnection()
+
+    // Delete a user from the database
+    const user = await usersCollection.findOneAndDelete({
+        socketid: id
+    })
+
+    // Return the deleted user
+    return user
 }
 
 
