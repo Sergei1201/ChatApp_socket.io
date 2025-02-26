@@ -1,7 +1,6 @@
 /* DB stuff */
 const User = require('../models/User')
 
-
 // User joins room
 const userJoins = async (socketid, username, room) => {
 
@@ -15,6 +14,7 @@ const userJoins = async (socketid, username, room) => {
 
 }
 
+// Get room users
 const getRoomUsers = async (room) => {
 
     // Get room users from the database
@@ -25,6 +25,7 @@ const getRoomUsers = async (room) => {
     // Return the array of users objects
     return users
 }
+
 // Get current user
 const getCurrentUser = async (id) => {
 
@@ -32,7 +33,6 @@ const getCurrentUser = async (id) => {
     const user = await User.findOne({
         socketid: id
     })
-
 
     return user
 }
@@ -48,7 +48,6 @@ const userLeaves = async (id) => {
     // Return the deleted user
     return user
 }
-
 
 module.exports = {
     userJoins,

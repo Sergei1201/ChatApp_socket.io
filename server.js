@@ -8,12 +8,10 @@ const {Server} = require('socket.io')
 const {userJoins, getCurrentUser, getRoomUsers, userLeaves} = require('./utils/users')
 const {formatMessage} = require('./utils/formatMessage')    
 const {connectDB} = require('./db')
-const {handleDBMessages} = require('./utils/messages')
+const {insertMessagesIntoDB} = require('./utils/messages')
 
 // Port variable
 const PORT = process.env.PORT || 5000
-
-
 
 // Connect to MongoDB
 connectDB() 
@@ -75,16 +73,13 @@ io.on('connection', async (socket) => {
             const user = await getCurrentUser(socket.id)
 
             // Save the message in the database before emitting the message event to the client
-            await handleDBMessages(user._id, message)
+            await insertMessagesIntoDB(user._id, message)
 
-
-
-            // Emit it back to every client (because it's a public chatroom)
-            io.to(user.room).emit('message', formatMessage(user.username, message))
-            
+            // Emit the message back to every client (because it's a public chatroom)
+            io.to(user.room).emit('message', formatMessage(user.username, message))            
         })
 
-        // When a client disconnected
+        // When a client disconnects
         socket.on('disconnect', async () => {
 
             // Get the user that is leaving the chatroom
@@ -93,7 +88,7 @@ io.on('connection', async (socket) => {
             // If there's a user, emit upgraded info about users to the client to be displayed in the DOM
             if (user) {
 
-            // Broadcast to every socket, when a client disconnected
+            // Broadcast to every socket in the room, when a client disconnected
             io.to(user.room).emit('message', formatMessage(admin, `${user.username} has left ${user.room} chatroom`))
 
             // Emit the upgraded array of users to the client
