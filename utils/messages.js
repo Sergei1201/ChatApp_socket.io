@@ -1,13 +1,14 @@
 /* Handle messages for saving them in the database */
-const { ObjectId } = require('mongodb')
-const {connectDB} = require('../db')
+const Message = require('../models/Message')
+const User = require('../models/Message')
 
-const handleDBMessages = async (message) => {
-    const db = await connectDB()
-    const msgCollection = db.collection('messages')
-    const msg = await msgCollection.insertOne({
+const handleDBMessages = async (userId, message) => {
+
+    // Getting all documents from User model
+    const msg = await Message.insertOne({
         message,
-        })
+        user: userId
+    })
     return msg
 }
 

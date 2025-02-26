@@ -27,7 +27,6 @@
 .users li {
     background-color: burlywood;
     padding: 10px;
-    margin-bottom: 10px;
     margin-bottom: 5px;
     list-style-type: none;
     
@@ -47,3 +46,7 @@
     margin-bottom: 5px;
 }
 
+#chat-users {
+ height: 300px;
+ overflow: auto;   
+}

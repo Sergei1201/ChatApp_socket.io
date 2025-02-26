@@ -8,6 +8,7 @@ const {Server} = require('socket.io')
 const {userJoins, getCurrentUser, getRoomUsers, userLeaves} = require('./utils/users')
 const {formatMessage} = require('./utils/formatMessage')    
 const {connectDB} = require('./db')
+const {handleDBMessages} = require('./utils/messages')
 
 // Port variable
 const PORT = process.env.PORT || 5000
@@ -15,7 +16,7 @@ const PORT = process.env.PORT || 5000
 
 
 // Connect to MongoDB
-//connectDB() 
+connectDB() 
 
 // Admin variable
 const admin = 'Admin'
@@ -40,7 +41,7 @@ app.use(express.static(path.join(__dirname, 'public')))
   */
  
 // Listen for a connection from the client
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
 
     // When a client connects for the first time, create a new collection in the chatapp database (MongoDB)
 
@@ -48,7 +49,7 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', async ({username, room}) => {
 
         // Get user object with user.id, username, room
-        const user = await userJoins(username, room)
+        const user = await userJoins(socket.id, username, room)
 
         // Actually join the room
         socket.join(user.room)
@@ -57,7 +58,7 @@ io.on('connection', (socket) => {
     
         // When a user joins the chatroom, emit to every socket info with room users and the room itself
         io.to(user.room).emit('roomUsers', {
-            users: getRoomUsers(user.room),
+            users: await getRoomUsers(user.room),
             room: user.room
         })
 
@@ -68,30 +69,36 @@ io.on('connection', (socket) => {
         socket.broadcast.to(user.room).emit('message', formatMessage(admin, `${user.username} has joined ${user.room} chatroom`))
 
         // Listen for the chatMessage event from the client
-        socket.on('chatMessage', (message) => {
+        socket.on('chatMessage', async (message) => {
 
             // Get the current user that emitted a message to send it to the client
-            const user = getCurrentUser(socket.id)
+            const user = await getCurrentUser(socket.id)
+
+            // Save the message in the database before emitting the message event to the client
+            await handleDBMessages(user._id, message)
+
+
 
             // Emit it back to every client (because it's a public chatroom)
             io.to(user.room).emit('message', formatMessage(user.username, message))
+            
         })
 
         // When a client disconnected
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
 
             // Get the user that is leaving the chatroom
-            const user = userLeaves(socket.id)
+            const user = await userLeaves(socket.id)
 
             // If there's a user, emit upgraded info about users to the client to be displayed in the DOM
             if (user) {
 
             // Broadcast to every socket, when a client disconnected
-            io.to(user.room).emit('message', formatMessage(`${user.username} has left ${user.room} chatroom`))
+            io.to(user.room).emit('message', formatMessage(admin, `${user.username} has left ${user.room} chatroom`))
 
             // Emit the upgraded array of users to the client
             io.to(user.room).emit('roomUsers', {
-                users: getRoomUsers(user.room),
+                users: await getRoomUsers(user.room),
                 room: user.room
             })
 

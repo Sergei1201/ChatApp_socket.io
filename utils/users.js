@@ -1,23 +1,6 @@
 /* DB stuff */
-const {connectDB} = require('../db')
+const User = require('../models/User')
 
-const handleDBConnection =  async () => {
-    
-    const db = await connectDB()
-    const usersCollection = db.collection('users')
-    return usersCollection
-}
-
-// Users collection
-const getUsersFromDB = async () => {
-
-     const usersCollection = await handleDBConnection()
-    // Fetch all users from DB and turn them into an array of objects
-    const users = await usersCollection.find({}).toArray()
-
-    return users
-
-}
 
 // User joins room
 const userJoins = async (socketid, username, room) => {
@@ -25,9 +8,8 @@ const userJoins = async (socketid, username, room) => {
     // When a user joins the room, add him to the database
     const newUser = {socketid, username, room} 
 
-    const usersCollection = await handleDBConnection()
-    // Add a new user to the database
-    await usersCollection.insertOne(newUser)
+    // Add a new user to the database on when he joins the room
+    await User.insertOne(newUser)
     
     return newUser
 
@@ -35,11 +17,10 @@ const userJoins = async (socketid, username, room) => {
 
 const getRoomUsers = async (room) => {
 
-    const usersCollection = await handleDBConnection()
-    // Get room users
-    const users = await usersCollection.find({
+    // Get room users from the database
+    const users = await User.find({
         room: room
-    }).toArray()
+    })
     
     // Return the array of users objects
     return users
@@ -47,8 +28,8 @@ const getRoomUsers = async (room) => {
 // Get current user
 const getCurrentUser = async (id) => {
 
-    const usersCollection = await handleDBConnection()
-    const user = await usersCollection.findOne({
+    // Get the current user from the database
+    const user = await User.findOne({
         socketid: id
     })
 
@@ -59,10 +40,8 @@ const getCurrentUser = async (id) => {
 // User leaves the room
 const userLeaves = async (id) => {
 
-    const usersCollection = await handleDBConnection()
-
     // Delete a user from the database
-    const user = await usersCollection.findOneAndDelete({
+    const user = await User.findOneAndDelete({
         socketid: id
     })
 
